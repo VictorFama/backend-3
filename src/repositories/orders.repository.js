@@ -35,5 +35,10 @@ export const ordersRepository = {
     const order = await OrderModel.findById(id);
     order.status = status;
     return order.save();
-  }
+  },
+
+  // guardo muchos pedidos de una sola vez
+  insertMany: async (orders) => {
+    return OrderModel.insertMany(orders);
+  },
 };

@@ -20,5 +20,10 @@ export const storesRepository = {
   // guarda un local nuevo
   create: async (storeData) => {
     return StoreModel.create(storeData);
+  },
+
+  // guardo muchos locales de una sola vez
+  insertMany: async (stores) => {
+    return StoreModel.insertMany(stores);
   }
 };

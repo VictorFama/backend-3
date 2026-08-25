@@ -3,6 +3,7 @@ import cors from "cors";
 import usersRouter from "./routes/users.router.js";
 import storesRouter from "./routes/stores.router.js";
 import ordersRouter from "./routes/orders.router.js";
+import mocksRouter from "./routes/mocks.router.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get("/health", (req, res) => {
 app.use("/api/users", usersRouter);
 app.use("/api/stores", storesRouter);
 app.use("/api/orders", ordersRouter);
+app.use("/api/mocks", mocksRouter);
 
 // si ninguna ruta matcheo cae aca
 app.use((req, res) => {

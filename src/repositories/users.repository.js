@@ -29,5 +29,12 @@ export const usersRepository = {
     const user = await UserModel.create(userData);
     const { password, ...sinPassword } = user.toObject();
     return sinPassword;
+  },
+
+   // guardo muchos usuarios de una sola vez
+  insertMany: async (users) => {
+    return UserModel.insertMany(users);
   }
 };
+
+ 
