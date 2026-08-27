@@ -6,6 +6,9 @@ import { storesRepository } from "../repositories/stores.repository.js";
 import { ordersRepository } from "../repositories/orders.repository.js";
 import { USER_ROLES } from "../constants/userroles.js";
 
+
+import { createError } from "../utils/AppError.js";
+
 // tope de registros por reques
 const MAX_MOCK_ITEMS = 100;
 
@@ -16,18 +19,23 @@ export const mocksService = {
     const cantidad = Number(valor);
 
     if (!Number.isInteger(cantidad) || cantidad < 0) {
-      const error = new Error(`"${nombre}" tiene que ser un numero entero mayor o igual a cero`);
-      error.statusCode = 400;
-      throw error;
+      throw createError("INVALID_MOCK_AMOUNT", `"${nombre}" tiene que ser un numero entero mayor o igual a cero, llego "${valor}"`);
     }
 
     if (cantidad > MAX_MOCK_ITEMS) {
-      const error = new Error(`"${nombre}" no puede superar ${MAX_MOCK_ITEMS}`);
-      error.statusCode = 400;
-      throw error;
+      throw createError("INVALID_MOCK_AMOUNT", `"${nombre}" no puede superar ${MAX_MOCK_ITEMS}, llego ${cantidad}`);
     }
 
     return cantidad;
+  },
+
+   // si la carga en mongo falla la devuelvo como MOCK_GENERATION_ERROR
+  insertarOFallar: async (nombre, insercion) => {
+    try {
+      return await insercion();
+    } catch (error) {
+      throw createError("MOCK_GENERATION_ERROR", `Fallo la insercion de ${nombre}: ${error.message}`);
+    }
   },
 
   // genero usuarios falsos sin guardarlos
@@ -45,9 +53,7 @@ export const mocksService = {
 
     // un pedido necesita cliente y local si no hay no se puede inventar
     if (clientes.length === 0 || locales.length === 0) {
-      const error = new Error("Primero hay que cargar clientes y locales con POST /api/mocks/generateData");
-      error.statusCode = 409;
-      throw error;
+      throw createError("MOCK_DEPENDENCIES_MISSING", "Primero hay que cargar clientes y locales");
     }
 
     return generateMockOrders(cantidad, clientes, locales);
@@ -63,11 +69,12 @@ export const mocksService = {
     const cantClientes = cantUsers - cantDuenios;
 
     const usuariosCreados = cantUsers > 0
-      ? await usersRepository.insertMany([
+      ? await mocksService.insertarOFallar("usuarios", () => usersRepository.insertMany([
           ...generateMockUsers(cantClientes, USER_ROLES.CUSTOMER),
           ...generateMockUsers(cantDuenios, USER_ROLES.STORE)
-        ])
+        ]))
       : [];
+
 
     // si no se pidieron usuarios nuevos uso los que ya estan en la base
     const duenios = usuariosCreados.filter((u) => u.role === USER_ROLES.STORE);
@@ -78,13 +85,13 @@ export const mocksService = {
       : await usersRepository.findAll({ role: USER_ROLES.STORE });
 
     if (cantStores > 0 && dueniosDisponibles.length === 0) {
-      const error = new Error("Para crear locales hacen falta usuarios con rol store");
-      error.statusCode = 409;
-      throw error;
+      throw createError("MOCK_DEPENDENCIES_MISSING", "Para crear locales hacen falta usuarios con rol store");
     }
 
     const localesCreados = cantStores > 0
-      ? await storesRepository.insertMany(generateMockStores(cantStores, dueniosDisponibles))
+      ? await mocksService.insertarOFallar("locales", () => storesRepository.insertMany(
+          generateMockStores(cantStores, dueniosDisponibles)
+        ))
       : [];
 
       const clientesDisponibles = clientes.length > 0
@@ -96,15 +103,13 @@ export const mocksService = {
       : await storesRepository.findAll();
 
     if (cantOrders > 0 && (clientesDisponibles.length === 0 || localesDisponibles.length === 0)) {
-      const error = new Error("Para crear pedidos hacen falta clientes y locales");
-      error.statusCode = 409;
-      throw error;
+      throw createError("MOCK_DEPENDENCIES_MISSING", "Para crear pedidos hacen falta clientes y locales");
     }
 
     const pedidosCreados = cantOrders > 0
-      ? await ordersRepository.insertMany(
+      ? await mocksService.insertarOFallar("pedidos", () => ordersRepository.insertMany(
           generateMockOrders(cantOrders, clientesDisponibles, localesDisponibles)
-        )
+        ))
       : [];
 
     return {

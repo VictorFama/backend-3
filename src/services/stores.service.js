@@ -2,19 +2,21 @@ import { storesRepository } from "../repositories/stores.repository.js";
 import { usersRepository } from "../repositories/users.repository.js";
 import { USER_ROLES } from "../constants/userroles.js";
 
+import { createError } from "../utils/AppError.js";
+
+const CAMPOS_OBLIGATORIOS = ["name", "address", "owner"];
+
 export const storesService = {
   // devuelve los locales activos
   getStores: async () => {
     return storesRepository.findAll();
   },
 
-  // devuelve un local o corta con 404
+  // devuelve un local o corta con STORE_NOT_FOUND
   getStoreById: async (id) => {
     const store = await storesRepository.findById(id);
     if (!store) {
-      const error = new Error("Local no encontrado");
-      error.statusCode = 404;
-      throw error;
+      throw createError("STORE_NOT_FOUND", `No hay ningun local con id ${id}`);
     }
 
     return store;
@@ -22,26 +24,21 @@ export const storesService = {
 
   // crea un local, el dueño tiene que existir y tener rol store
   createStore: async (storeData) => {
-    const { name, address, owner } = storeData;
+    const { owner } = storeData;
 
-    if (!name || !address || !owner) {
-      const error = new Error("Faltan datos obligatorios");
-      error.statusCode = 400;
-      throw error;
+    const faltantes = CAMPOS_OBLIGATORIOS.filter((campo) => !storeData[campo]);
+    if (faltantes.length > 0) {
+      throw createError("VALIDATION_ERROR", `Faltan campos obligatorios: ${faltantes.join(", ")}`);
     }
 
     const user = await usersRepository.findById(owner);
     if (!user) {
-      const error = new Error("El dueño indicado no existe");
-      error.statusCode = 404;
-      throw error;
+      throw createError("USER_NOT_FOUND", `El dueño indicado (${owner}) no existe`);
     }
 
     // regla del dominio: un local solo lo puede tener un usuario con rol store
     if (user.role !== USER_ROLES.STORE) {
-      const error = new Error("El usuario indicado no tiene rol de local");
-      error.statusCode = 409;
-      throw error;
+      throw createError("INVALID_STORE_OWNER", `El usuario ${owner} tiene rol "${user.role}"`);
     }
 
     return storesRepository.create(storeData);

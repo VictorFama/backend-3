@@ -2,25 +2,24 @@
 import { usersRepository } from "../repositories/users.repository.js";
 import { USER_ROLE_VALUES } from "../constants/userroles.js";
 
+import { createError } from "../utils/AppError.js";
+
+const CAMPOS_OBLIGATORIOS = ["firstName", "lastName", "email", "password"];
+
 export const usersService = {
   // devuelve los usuarios, valida el rol antes de ir a la base
   getUsers: async ({ role } = {}) => {
     if (role && !USER_ROLE_VALUES.includes(role)) {
-      const error = new Error(`El rol "${role}" no existe. Validos: ${USER_ROLE_VALUES.join(", ")}`);
-      error.statusCode = 400;
-      throw error;
+      throw createError("INVALID_USER_ROLE", `Llego "${role}". Validos: ${USER_ROLE_VALUES.join(", ")}`);
     }
-
     return usersRepository.findAll({ role });
   },
 
-  // devuelve un usuario o corta con 404
+  // devuelve un usuario o corta con USER_NOT_FOUND
   getUserById: async (id) => {
     const user = await usersRepository.findById(id);
     if (!user) {
-      const error = new Error("Usuario no encontrado");
-      error.statusCode = 404;
-      throw error;
+      throw createError("USER_NOT_FOUND", `No hay ningun usuario con id ${id}`);
     }
 
     return user;
@@ -28,25 +27,20 @@ export const usersService = {
 
   // crea un usuario validando datos obligatorios, rol y email repetido
   createUser: async (userData) => {
-    const { firstName, lastName, email, password, role } = userData;
+    const { email, role } = userData;
 
-    if (!firstName || !lastName || !email || !password) {
-      const error = new Error("Faltan datos obligatorios");
-      error.statusCode = 400;
-      throw error;
+    const faltantes = CAMPOS_OBLIGATORIOS.filter((campo) => !userData[campo]);
+    if (faltantes.length > 0) {
+      throw createError("VALIDATION_ERROR", `Faltan campos obligatorios: ${faltantes.join(", ")}`);
     }
 
     if (role && !USER_ROLE_VALUES.includes(role)) {
-      const error = new Error(`El rol "${role}" no existe. Validos: ${USER_ROLE_VALUES.join(", ")}`);
-      error.statusCode = 400;
-      throw error;
+      throw createError("INVALID_USER_ROLE", `Llego "${role}". Validos: ${USER_ROLE_VALUES.join(", ")}`);
     }
 
-    // el email es la identidad del usuario, no puede repetirse
+    // email es unico no se puede repetir
     if (await usersRepository.existsByEmail(email)) {
-      const error = new Error("Ya existe un usuario con ese email");
-      error.statusCode = 409;
-      throw error;
+      throw createError("USER_ALREADY_EXISTS", `El email ${email} ya esta registrado`);
     }
 
     return usersRepository.create(userData);
