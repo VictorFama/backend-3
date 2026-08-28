@@ -285,3 +285,130 @@ Desde Postman:
     POST /api/users               body {}                  400 VALIDATION_ERROR
     POST /api/mocks/generateData  body { "users": -3 }     400 INVALID_MOCK_AMOUNT
     POST /api/mocks/generateData  body { "users": "diez" } 400 INVALID_MOCK_AMOUNT
+
+## Entrega Módulo 4 — Logging y monitoreo basico
+El proyecto deja de usar `console.log` y ahora todos los mensajes salen por un logger centralizado con el formato de fecha, nivel y mensaje
+
+### Que herramienta se usa
+
+- **Winston** para el logger y los niveles.
+- **winston-daily-rotate-file** para partir el archivo de errores por dia.
+
+### Los niveles
+
+| Nivel | Numero | Cuando se usa | Va al archivo de logs |
+|---|---|---|---|
+| `fatal` | 0 | el servidor no pudo arrancar | si |
+| `error` | 1 | una operacion fallo (5xx) | si |
+| `warning` | 2 | error esperado del cliente (4xx) | no |
+| `info` | 3 | arranque, conexion a Mongo, pedido creado, cambio de estado | no |
+| `http` | 4 | una linea por cada peticion que entra | no |
+| `debug` | 5 | detalle de desarrollo y stack traces | no |
+
+En Winston el numero mas bajo es el mas importante.
+
+### Como probar el logger
+
+Con el servidor levantado:
+
+    GET http://localhost:8080/loggerTest
+
+Tambien responde en `/api/loggerTest`. Dispara los seis niveles de una sola vez y
+devuelve:
+
+    {
+      "status": "success",
+      "message": "Logs generados correctamente"
+    }
+
+En la consola salen las seis lineas:
+
+    2026-08-27 15:41:02 [debug]    debug - informacion detallada para pruebas
+    2026-08-27 15:41:02 [http]     http - registro de una solicitud HTTP
+    2026-08-27 15:41:02 [info]     info - informacion general del sistema
+    2026-08-27 15:41:02 [warning]  warning - algo merece atencion
+    2026-08-27 15:41:02 [error]    error - una operacion fallo
+    2026-08-27 15:41:02 [fatal]    fatal - error critico del sistema
+
+Y en el archivo de Logs se registran los error y fatal.
+
+
+### Ejemplos de cada nivel
+
+**debug** — detalle de desarrollo:
+
+    GET http://localhost:8080/api/mocks/mockingusers?qty=3
+
+    2026-08-27 17:06:56 [debug]    Generando 3 usuarios falsos (no se guardan)
+
+**http** — una linea por cada peticion que entra:
+
+    GET http://localhost:8080/health
+
+    2026-08-27 17:09:44 [http]     GET /health -> 200 (1ms)
+
+**info** — evento normal e importante:
+
+    POST http://localhost:8080/api/orders
+
+    {
+      "customer": "6a8d8a04f9f39b9cc4149b04",
+      "store": "6a8d8a04f9f39b9cc4149b09",
+      "deliveryAddress": "Zeballos 1281",
+      "items": [
+        { "name": "Empanadas de carne", "quantity": 12, "price": 800 },
+        { "name": "Gaseosa 1.5L", "quantity": 1, "price": 2200 }
+      ]
+    }
+
+    2026-08-27 17:15:54 [info]     Pedido 6a909afa7e25565871155f7c creado para el cliente 6a8d8a04f9f39b9cc4149b04 (2 items, total 11800)
+
+**warning** — error esperado, el cliente pidio algo que no existe:
+
+    GET http://localhost:8080/api/orders/000000000000000000000000
+
+    2026-08-27 17:20:35 [warning]  ORDER_NOT_FOUND - GET /api/orders/000000000000000000000000 -> No se encontro el pedido
+
+**error** — error inesperado del servidor (5xx):
+
+    GET http://localhost:8080/api/users/error
+
+    2026-08-27 17:21:35 [error]    INTERNAL_SERVER_ERROR - GET /api/users/error -> Cast to ObjectId failed for value "error" (type string) at path "_id" for model "User"
+
+**fatal** — el sistema no puede funcionar, por ejemplo si falla la conexion a Mongo. no dispara Http.
+
+    2026-08-27 17:24:22 [fatal]    No se pudo iniciar el servidor: bad auth : Authentication failed.
+
+### Donde se guardan los logs
+
+En la carpeta `logs/`, un archivo por dia:
+
+    logs/errors-2026-08-27.log
+    logs/errors-2026-08-28.log
+
+- Se guardan los niveles `error` y `fatal`. Los `info`, `warning`, `http` y `debug` se ven en consola pero no quedan en disco.
+- Quedan por 14 dias y los mas viejos se borran solos, para que la carpeta no crezca.
+
+### Que se ignora en Git
+
+Los archivos de log los genera la aplicacion en cada ejecucion, asi que no van al repositorio:
+
+    logs/
+    *.log
+
+La carpeta `logs/` se crea sola la primera vez que el logger escribe, no hace falta crearla a mano. Los archivos pueden contener detalles internos del sistema, por eso
+quedan afuera del repo.
+
+### El comportamiento segun el entorno
+
+El nivel minimo con el que arranca el logger sale de `NODE_ENV`, y se resuelve en
+`src/config/env.js`:
+
+| NODE_ENV | Nivel minimo | Que se registra |
+|---|---|---|
+| `development` | `debug` | `debug`, `http`, `info`, `warning`, `error` y `fatal` |
+| `production` | `info` | `info`, `warning`, `error` y `fatal` |
+
+En produccion no se generan los `debug` ni los `http`, para no llenar de ruido el servidor real.
+
+El archivo de errores no cambia con el entorno, tanto el dev y prod guardan en el mismo archivo y solo guardan `error` y `fatal`.

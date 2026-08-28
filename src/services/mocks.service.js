@@ -9,6 +9,8 @@ import { USER_ROLES } from "../constants/userroles.js";
 
 import { createError } from "../utils/AppError.js";
 
+import logger from "../config/logger.js";
+
 // tope de registros por reques
 const MAX_MOCK_ITEMS = 100;
 
@@ -41,6 +43,7 @@ export const mocksService = {
   // genero usuarios falsos sin guardarlos
   getMockUsers: (qty) => {
     const cantidad = mocksService.validarCantidad(qty ?? 10, "qty");
+    logger.debug(`Generando ${cantidad} usuarios falsos (no se guardan)`);
     return generateMockUsers(cantidad);
   },
 
@@ -55,6 +58,8 @@ export const mocksService = {
     if (clientes.length === 0 || locales.length === 0) {
       throw createError("MOCK_DEPENDENCIES_MISSING", "Primero hay que cargar clientes y locales");
     }
+
+    logger.debug(`Generando ${cantidad} pedidos falsos sobre ${clientes.length} clientes y ${locales.length} locales`);
 
     return generateMockOrders(cantidad, clientes, locales);
   },
@@ -111,6 +116,11 @@ export const mocksService = {
           generateMockOrders(cantOrders, clientesDisponibles, localesDisponibles)
         ))
       : [];
+
+    logger.info(
+      `Datos de prueba cargados en MongoDB: ${usuariosCreados.length} usuarios, ` +
+      `${localesCreados.length} locales, ${pedidosCreados.length} pedidos`
+    );
 
     return {
       users: usuariosCreados.length,

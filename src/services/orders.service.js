@@ -5,6 +5,8 @@ import { ORDER_STATUS, ORDER_STATUS_VALUES } from "../constants/orderstatus.js";
 
 import { createError } from "../utils/AppError.js";
 
+import logger from "../config/logger.js";
+
 const CAMPOS_OBLIGATORIOS = ["customer", "store", "deliveryAddress"];
 export const ordersService = {
   // devuelve los pedidos, valida el estado si viene como filtro
@@ -67,7 +69,7 @@ export const ordersService = {
       total += precio * cantidad;
     }
 
-    return ordersRepository.create({
+    const pedido = await ordersRepository.create({
       customer,
       store,
       items,
@@ -76,6 +78,10 @@ export const ordersService = {
       priority,
       status: ORDER_STATUS.CREATED
     });
+
+    logger.info(`Pedido ${pedido._id} creado para el cliente ${customer} (${items.length} items, total ${total})`);
+
+    return pedido;
   },
 
   // cambia el estado del pedido
@@ -95,6 +101,10 @@ export const ordersService = {
       throw createError("ORDER_ALREADY_CLOSED", `El pedido esta en estado "${order.status}"`);
     }
 
-    return ordersRepository.updateStatus(id, status);
+    const actualizado = await ordersRepository.updateStatus(id, status);
+
+    logger.info(`Pedido ${id} paso de "${order.status}" a "${status}"`);
+
+    return actualizado;
   }
 };

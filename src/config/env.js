@@ -7,6 +7,7 @@ const REQUERIDAS = ["PORT", "MONGODB_URI", "NODE_ENV"];
 
 const faltantes = REQUERIDAS.filter((nombre) => !process.env[nombre]);
 
+
 // si falta alguna cortamos aca, en el arranque, y no en el primer request
 if (faltantes.length > 0) {
   throw new Error(
@@ -30,10 +31,18 @@ if (!Number.isInteger(port) || port <= 0) {
   throw new Error(`PORT tiene que ser un numero entero positivo, llego: "${process.env.PORT}".`);
 }
 
+// en produccion arranca en info en desarrollo desde el debug
+const logLevel = process.env.NODE_ENV === "production" ? "info" : "debug";
+
+
 // el resto del proyecto importa esto, nunca process.env
 export const envConfig = {
   port,
   mongoUri: process.env.MONGODB_URI,
   nodeEnv: process.env.NODE_ENV,
-  isProd: process.env.NODE_ENV === "production"
+  isProd: process.env.NODE_ENV === "production",
+  logLevel
 };
+
+
+

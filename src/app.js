@@ -12,8 +12,13 @@ import mocksRouter from "./routes/mocks.router.js";
 import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
+//logger
+import { httpLogger } from "./middlewares/httpLogger.js";
+import loggerRouter from "./routes/logger.router.js";
+
 const app = express();
 
+app.use(httpLogger);
 app.use(cors());
 app.use(express.json());
 
@@ -35,6 +40,9 @@ app.use("/api/users", usersRouter);
 app.use("/api/stores", storesRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/mocks", mocksRouter);
+
+app.use(loggerRouter);
+app.use("/api", loggerRouter);
 
 // si ninguna ruta matcheo cae aca
 app.use(notFoundHandler);
