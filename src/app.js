@@ -16,6 +16,9 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import { httpLogger } from "./middlewares/httpLogger.js";
 import loggerRouter from "./routes/logger.router.js";
 
+//swagger
+import swaggerUI from "swagger-ui-express";
+import { swaggerSpecs } from "./docs/swagger.config.js";
 const app = express();
 
 app.use(httpLogger);
@@ -43,6 +46,8 @@ app.use("/api/mocks", mocksRouter);
 
 app.use(loggerRouter);
 app.use("/api", loggerRouter);
+
+app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
 
 // si ninguna ruta matcheo cae aca
 app.use(notFoundHandler);

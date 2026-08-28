@@ -1,0 +1,120 @@
+components:
+  schemas:
+    ErrorResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: error
+          error:
+            type: string
+            example: ORDER_NOT_FOUND
+          message:
+            type: string
+            example: No se encontro el pedido
+          details:
+            type: string
+            description: Solo aparece fuera de produccion
+            example: No hay ningun pedido con id 000000000000000000000000
+    SuccessResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: success
+          message:
+            type: string
+            description: Solo en los endpoints que devuelven un mensaje
+            example: Datos generados
+          payload:
+            type: object
+            description: Es el contenido de la respuesta. La estructgura depende del endpoint.
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 68af3c9e12ab4d5e6f708192
+        firstName:
+          type: string
+          example: Vickie
+        lastName:
+          type: string
+          example: Gislason-Veum
+        email:
+          type: string
+          example: vickie_gislason-veum@i3trfg.test.com
+        role:
+          type: string
+          enum: [admin, customer, store]
+          example: customer
+        documents:
+          type: array
+          description: Se llena en el Modulo 7 con Multer
+          items:
+            type: object
+          example: []
+    Store:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 6a8d8a04f9f39b9cc4149b09
+        name:
+          type: string
+          example: Dach and Sons
+        address:
+          type: string
+          example: 4190 Funk Overpass
+        owner:
+          type: string
+          description: ID del usuario con rol store que es dueño del local
+          example: 6a8d8a04f9f39b9cc4149b07
+        isActive:
+          type: boolean
+          example: true
+    OrderItem:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Empanadas de carne
+        quantity:
+          type: number
+          example: 12
+        price:
+          type: number
+          example: 800
+    Order:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 6a909afa7e25565871155f7c
+        customer:
+          type: string
+          description: ID del cliente. En las consultas llega con nombre, apellido y email
+          example: 6a8d8a04f9f39b9cc4149b04
+        store:
+          type: string
+          description: ID del local. En las consultas llega con nombre y direccion
+          example: 6a8d8a04f9f39b9cc4149b09
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        deliveryAddress:
+          type: string
+          example: Zeballos 1281
+        total:
+          type: number
+          description: Lo calcula la API a partir de los items, no se envia
+          example: 9600
+        status:
+          type: string
+          enum: [created, assigned, picked_up, in_transit, delivered, cancelled]
+          example: created
+        priority:
+          type: string
+          enum: [low, normal, high]
+          example: normal

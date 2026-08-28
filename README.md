@@ -412,3 +412,82 @@ El nivel minimo con el que arranca el logger sale de `NODE_ENV`, y se resuelve e
 En produccion no se generan los `debug` ni los `http`, para no llenar de ruido el servidor real.
 
 El archivo de errores no cambia con el entorno, tanto el dev y prod guardan en el mismo archivo y solo guardan `error` y `fatal`.
+
+
+## Entrega Módulo 5 — Documentación de API con Swagger
+
+La API está documentada con Swagger. Con el servidor levantado se puede ver la documentacion en:
+
+    http://localhost:8080/api/docs
+
+Para levantar el servidor: `npm run dev` desde la carpeta del proyecto.
+
+### Que modulos estan documentados
+
+Catorce endpoints agrupados en cinco tags:
+
+| Tag | Endpoints | Que hace |
+|---|---|---|
+| Users | 3 | lista con filtro por rol, busca por id, crea |
+| Stores | 3 | lista, busca por id, crea |
+| Orders | 4 | lista con filtros, busca por id, crea, cambia el estado |
+| Mocks | 3 | genera sin guardar, genera pedidos, inserta en mongo |
+| Logger | 1 | dispara los seis niveles |
+
+Cada endpoint documenta metodo, ruta, descripcion, parametros, body esperado, la respuesta exitosa y los errores que puede devolver.
+
+
+### Como esta organizada la documentacion
+
+La configuracion de Swagger esta en `src/docs/swagger.config.js`, separada de las rutas:
+no hay ni un comentario de Swagger dentro de los routers ni de los controllers.
+
+Cada modulo tiene su archivo YAML en `src/docs/`:
+
+    swagger.config.js    la configuracion general
+    schemas.yaml         los 6 schemas 
+    users.yaml           
+    stores.yaml
+    orders.yaml          
+    mocks.yaml          
+    logger.yaml
+
+Los schemas se definen una vez y se referencian con `$ref` desde todos los endpoints que
+los necesitan. Los errores se documentan siempre con el schema `ErrorResponse`.
+
+### Como probar los endpoints
+
+En Swagger, todos se prueban igual, desplegar el endpoint, apretar **Try it out** completar lo que pida y apretar **Execute**. La respuesta aparece abajo, con el status y
+el body.
+
+
+**Users**
+
+- `GET /api/users` — elegir un rol en el desplegable o dejarlo vacio para traer todos y Execute. De aca salen los ids de usuario para el resto.
+- `GET /api/users/{uid}` — pegar un id de usuario en el campo `uid` y Execute.
+- `POST /api/users` — completar el Request body, que viene con un ejemplo cargado y Execute. El email no se puede repetir: si se manda dos veces, responde 409.
+
+**Stores**
+
+- `GET /api/stores` — Execute directo no lleva parametros.
+- `GET /api/stores/{sid}` — pegar un id de local y Execute.
+- `POST /api/stores` — completar el body. El `owner` tiene que ser el id de un usuario con rol `store`, que se saca de `GET /api/users?role=store`. Si se manda un cliente
+  devuelve 409.
+
+**Orders**
+
+- `GET /api/orders` — los filtros son opcionales `customer`, `store` y `status` se pueden completar o dejarlos vacios. El `status` es un combo. Execute.
+- `GET /api/orders/{oid}` — pegar un id de pedido y Execute.
+- `POST /api/orders` — completar el body con un `customer` y un `store` que existan, la direccion y los items. El `total` no se manda: lo calcula la API.
+- `PUT /api/orders/{oid}/status` — pegar el id del pedido arriba y en el body dejar solo el estado nuevo. Un pedido `delivered` o `cancelled` ya no cambia: responde 409.
+
+**Mocks**
+
+- `GET /api/mocks/mockingusers` — poner un `qty` o dejarlo vacio (10 por defecto) y Execute. No guarda nada, solo muestra.
+- `GET /api/mocks/mockingorders` — igual, 5 por defecto. Necesita clientes y locales ya cargados; sino responde 409.
+- `POST /api/mocks/generateData` — completar cuantos usuarios, locales y pedidos y Execute. Es la forma mas rapida de llenar la base la primera vez ya que esto si escribe y la base 
+  va a estar vacia.
+
+**Logger**
+
+- `GET /loggerTest` — Execute directo. Ademas de la respuesta, en la consola del servidor aparecen las seis lineas de log, una por nivel.

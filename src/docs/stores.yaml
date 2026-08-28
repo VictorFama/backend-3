@@ -1,0 +1,112 @@
+paths:
+  /api/stores:
+    get:
+      summary: Lista de  locales
+      description: Devuelve los locales activos.
+      tags:
+        - Stores
+      responses:
+        "200":
+          description: Lista de locales obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Store'
+
+    post:
+      summary: Crear un local
+      description: El dueño tiene que ser un usuario existente y con rol store.
+      tags:
+        - Stores
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - address
+                - owner
+              properties:
+                name:
+                  type: string
+                  example: Kiosco 24hs
+                address:
+                  type: string
+                  example: Av. Rivadavia 5400
+                owner:
+                  type: string
+                  description: ID de un usuario con rol store
+                  example: 6a8d8a04f9f39b9cc4149b09
+      responses:
+        "201":
+          description: Local creado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/Store'
+        "400":
+          description: Faltan campos obligatorios (VALIDATION_ERROR)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: El dueño no existe (USER_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: El usuario existe pero no tiene rol store (INVALID_STORE_OWNER)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/stores/{sid}:
+    get:
+      summary: Obtener un local por ID
+      tags:
+        - Stores
+      parameters:
+        - name: sid
+          in: path
+          required: true
+          description: ID del local
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Local obtenido correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/Store'
+        "404":
+          description: El local no existe (STORE_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

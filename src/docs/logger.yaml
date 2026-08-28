@@ -1,0 +1,23 @@
+paths:
+  /loggerTest:
+    get:
+      summary: Probar los niveles del logger
+      description: Dispara un log de cada uno de los seis niveles (debug, http, info, warning,
+        error y fatal) para verificar que el logger este bien configurado.
+        Tambien responde en /api/loggerTest.
+      tags:
+        - Logger
+      responses:
+        "200":
+          description: Logs generados correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Logs generados correctamente

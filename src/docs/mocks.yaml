@@ -1,0 +1,127 @@
+paths:
+  /api/mocks/mockingusers:
+    get:
+      summary: Genera usuarios falsos sin guardarlos
+      description: Devuelve usuarios inventados con Faker, no toca la base de datos.
+      tags:
+        - Mocks
+      parameters:
+        - name: qty
+          in: query
+          required: false
+          description: Cuantos generar. Por defecto 10 y el es tope 100.
+          schema:
+            type: integer
+            example: 5
+      responses:
+        "200":
+          description: Usuarios generados correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        "400":
+          description: La cantidad es negativa no numerica o supera 100 (INVALID_MOCK_AMOUNT)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/mocks/mockingorders:
+    get:
+      summary: Generar pedidos falsos sin guardarlos
+      description: Necesita clientes y locales ya cargados.
+      tags:
+        - Mocks
+      parameters:
+        - name: qty
+          in: query
+          required: false
+          description: Cuantos generar. Por defecto 5 y el es tope 100.
+          schema:
+            type: integer
+            example: 3
+      responses:
+        "200":
+          description: Pedidos generados correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+        "400":
+          description: La cantidad es invalida (INVALID_MOCK_AMOUNT)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: No hay clientes o locales cargados (MOCK_DEPENDENCIES_MISSING)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/mocks/generateData:
+    post:
+      summary: Insertar datos de prueba en Mongo
+      description: Este si guarda en la base. Respeta el orden usuarios locales pedidos.
+      tags:
+        - Mocks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                users:
+                  type: integer
+                  description: Se reparten mitad customer y mitad store
+                  example: 10
+                stores:
+                  type: integer
+                  example: 4
+                orders:
+                  type: integer
+                  example: 20
+      responses:
+        "201":
+          description: Datos insertados. El payload trae cuantos se creo de cada uno.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        "400":
+          description: Alguna cantidad es invalida (INVALID_MOCK_AMOUNT)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Faltan datos previos (MOCK_DEPENDENCIES_MISSING)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Fallo la insercion en Mongo (MOCK_GENERATION_ERROR)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

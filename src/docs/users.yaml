@@ -1,0 +1,126 @@
+paths:
+  /api/users:
+    get:
+      summary: Lista de usuarios
+      description: Devuelve todos los usuarios y se puede filtrar por rol.
+      tags:
+        - Users
+      parameters:
+        - name: role
+          in: query
+          required: false
+          description: Filtra por rol. Uno de admin, customer o store.
+          schema:
+            type: string
+            enum: [admin, customer, store]
+      responses:
+        "200":
+          description: Lista de usuarios obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        "400":
+          description: El rol enviado no es valido (INVALID_USER_ROLE)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Crea un usuario
+      description: Crea un usuario. El email no se puede repetir y el password nunca se envia en la respuesta.
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+              properties:
+                firstName:
+                  type: string
+                  example: Victor
+                lastName:
+                  type: string
+                  example: Fama
+                email:
+                  type: string
+                  example: victor@test.com
+                password:
+                  type: string
+                  example: "579135"
+                role:
+                  type: string
+                  enum: [admin, customer, store]
+                  example: customer
+      responses:
+        "201":
+          description: Usuario creado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/User'
+        "400":
+          description: Faltan campos obligatorios o el rol es invalido (VALIDATION_ERROR, INVALID_USER_ROLE)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Ya existe un usuario con ese email (USER_ALREADY_EXISTS)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users/{uid}:
+    get:
+      summary: Obtener usuario por ID
+      tags:
+        - Users
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Usuario obtenido correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/User'
+        "404":
+          description: El usuario no existe (USER_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
