@@ -6,7 +6,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "mocha --file ./tests/setup.js ./tests/**/*.test.js --timeout 20000"
   },
   "dependencies": {
     "@faker-js/faker": "^10.6.0",
@@ -20,6 +21,9 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "chai": "^6.2.2",
+    "mocha": "^11.8.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }

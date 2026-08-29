@@ -21,11 +21,11 @@ export const mocksService = {
     const cantidad = Number(valor);
 
     if (!Number.isInteger(cantidad) || cantidad < 0) {
-      throw createError("INVALID_MOCK_AMOUNT", `"${nombre}" tiene que ser un numero entero mayor o igual a cero, llego "${valor}"`);
+      throw createError("INVALID_MOCK_AMOUNT", `"${nombre}" tiene que ser un numero entero mayor o igual a cero y llego "${valor}"`);
     }
 
     if (cantidad > MAX_MOCK_ITEMS) {
-      throw createError("INVALID_MOCK_AMOUNT", `"${nombre}" no puede superar ${MAX_MOCK_ITEMS}, llego ${cantidad}`);
+      throw createError("INVALID_MOCK_AMOUNT", `"${nombre}" no puede superar ${MAX_MOCK_ITEMS} y llego ${cantidad}`);
     }
 
     return cantidad;
@@ -43,7 +43,7 @@ export const mocksService = {
   // genero usuarios falsos sin guardarlos
   getMockUsers: (qty) => {
     const cantidad = mocksService.validarCantidad(qty ?? 10, "qty");
-    logger.debug(`Generando ${cantidad} usuarios falsos (no se guardan)`);
+    logger.debug(`Generando ${cantidad} usuarios`);
     return generateMockUsers(cantidad);
   },
 
@@ -59,7 +59,7 @@ export const mocksService = {
       throw createError("MOCK_DEPENDENCIES_MISSING", "Primero hay que cargar clientes y locales");
     }
 
-    logger.debug(`Generando ${cantidad} pedidos falsos sobre ${clientes.length} clientes y ${locales.length} locales`);
+    logger.debug(`Generando ${cantidad} pedidos sobre ${clientes.length} clientes y ${locales.length} locales`);
 
     return generateMockOrders(cantidad, clientes, locales);
   },

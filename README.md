@@ -491,3 +491,57 @@ el body.
 **Logger**
 
 - `GET /loggerTest` — Execute directo. Ademas de la respuesta, en la consola del servidor aparecen las seis lineas de log, una por nivel.
+
+## Entrega Módulo 6 — Testing funcional con Mocha, Chai y Supertest
+
+La API tiene 30 tests que validan los endpoints principales, tanto en los casos exitosos como en los errores esperados.
+
+### Que herramientas se usan
+
+- **Mocha** — organiza y ejecuta las pruebas (`describe`, `it`, hooks).
+- **Chai** — valida los resultados (`expect`).
+- **Supertest** — hace las peticiones HTTP contra la app de Express.
+
+Las tres estan en `devDependencies`.
+
+### Como ejecutar los tests
+
+    npm test
+
+No hace falta levantar el servidor: Supertest importa la app desde `src/app.js`, que esta
+separado de `src/server.js`.
+
+### Que modulos estan cubiertos
+
+| Archivo | Tests | Que cubre |
+|---|---|---|
+| `tests/users.test.js` | 6 | listar, valida la estructura de la respuesta, crear, datos incompletos, email repetido, usuario inexistente |
+| `tests/stores.test.js` | 6 | listar, valida la estructura de la respuesta, crear, datos incompletos, dueño con rol incorrecto, local inexistente |
+| `tests/orders.test.js` | 9 | listar, crear, buscar por id, cambiar estado y los errores de cada uno |
+| `tests/mocks.test.js` | 6 | mockingusers, mockingorders, generateData y cantidades invalidas |
+| `tests/app.test.js` | 3 | `/loggerTest`, la ruta de Swagger y el 404 de ruta inexistente |
+
+
+### La base de datos de testing
+
+Se utiliza una base de datos separada ya que los tests crean y borran datos.
+
+Usa el mismo cluster de Atlas que usa el proyecto, apuntando a la base `shipnow-test`. No
+hay que crearla Mongo la crea sola la primera vez que se escribe algo. 
+Los datos que generan los tests se borran solos en los hooks `afterEach`.
+
+`tests/setup.js` corta la ejecucion si `NODE_ENV` no es `test` o si la base a la que se
+conecto no es de testing.
+
+### Que variables de entorno son necesarias
+
+Un archivo `.env.test` en la raiz del proyecto, con las mismas tres variables que el `.env`:
+
+| Variable | Valor |
+|---|---|
+| `NODE_ENV` | `test` |
+| `PORT` | `8081` |
+| `MONGODB_URI` | la URI del cluster con la base `shipnow-test` al final |
+
+Esta la plantilla en `.env.test.example` copiarla a `.env.test` y completar usuario y
+password. El `.env.test` no se sube al repo igual que el `.env`.
