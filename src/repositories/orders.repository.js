@@ -37,6 +37,13 @@ export const ordersRepository = {
     return order.save();
   },
 
+  // piso los campos que le paso y devuelve el pedido ya actualizado
+  update: async (id, updates) => {
+    return OrderModel.findByIdAndUpdate(id, updates, { new: true, runValidators: true })
+      .populate("customer", DATOS_CLIENTE)
+      .populate("store", DATOS_LOCAL);
+  },
+
   // guardo muchos pedidos de una sola vez
   insertMany: async (orders) => {
     return OrderModel.insertMany(orders);

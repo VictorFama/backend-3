@@ -1,8 +1,11 @@
 // reglas de negocio de usuarios, no conoce express ni mongoose
 import { usersRepository } from "../repositories/users.repository.js";
 import { USER_ROLE_VALUES } from "../constants/userroles.js";
+import { DOCUMENT_TYPE_VALUES } from "../constants/documentTypes.js";
 
 import { createError } from "../utils/AppError.js";
+
+import logger from "../config/logger.js";
 
 const CAMPOS_OBLIGATORIOS = ["firstName", "lastName", "email", "password"];
 
@@ -44,5 +47,38 @@ export const usersService = {
     }
 
     return usersRepository.create(userData);
+  },
+
+  // guarda los metadatos del archivo dentro del usuario
+  addDocument: async (id, file, type) => {
+    if (!file) {
+      throw createError("FILE_REQUIRED", "No llego ningun archivo en el campo document");
+    }
+
+    if (!DOCUMENT_TYPE_VALUES.includes(type)) {
+      throw createError("INVALID_DOCUMENT_TYPE", `Llego "${type}". Validos: ${DOCUMENT_TYPE_VALUES.join(", ")}`);
+    }
+
+    const user = await usersRepository.findById(id);
+    if (!user) {
+      throw createError("USER_NOT_FOUND", `No hay ningun usuario con id ${id}`);
+    }
+
+    // en la base van los metadatos, el archivo se queda en uploads/
+    const document = {
+      originalName: file.originalname,
+      fileName: file.filename,
+      path: file.path,
+      mimeType: file.mimetype,
+      size: file.size,
+      type,
+      uploadedAt: new Date()
+    };
+
+    const actualizado = await usersRepository.update(id, { documents: [...user.documents, document] });
+
+    logger.info(`Documento "${document.originalName}" (${type}, ${document.size} bytes) cargado para el usuario ${id}`);
+
+    return actualizado;
   }
 };

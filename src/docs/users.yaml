@@ -123,4 +123,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    
+
+  /api/users/{uid}/documents:
+    post:
+      summary: Sube un documento de un usuario
+      description: >-
+        Recibe el archivo en el campo document y el tipo de documento en el campo type.
+        Guarda el archivo en uploads/documents y deja los metadatos dentro del usuario.
+        Tipos de archivo aceptados: PDF, JPEG, PNG y WEBP. Tamano maximo 5 MB.
+      tags:
+        - Users
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          description: ID del usuario al que se le asocia el documento
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - document
+                - type
+              properties:
+                document:
+                  type: string
+                  format: binary
+                  description: El archivo. PDF, JPEG, PNG o WEBP, hasta 5 MB.
+                type:
+                  type: string
+                  enum: [user_document, driver_license, delivery_proof]
+                  example: user_document
+                  description: Tipo de documento
+      responses:
+        "200":
+          description: Documento cargado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/User'
+        "400":
+          description: >-
+            Falta el archivo (FILE_REQUIRED), el tipo de archivo no esta permitido
+            (INVALID_FILE_TYPE), supera los 5 MB (FILE_TOO_LARGE), el campo no es
+            document (INVALID_FILE_FIELD) o el tipo de documento no es valido
+            (INVALID_DOCUMENT_TYPE)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: El usuario no existe (USER_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: No se pudo guardar el archivo (UPLOAD_ERROR)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

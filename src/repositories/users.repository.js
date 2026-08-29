@@ -31,6 +31,11 @@ export const usersRepository = {
     return sinPassword;
   },
 
+  // piso los campos que le paso y devuelve el usuario ya actualizado
+  update: async (id, updates) => {
+    return UserModel.findByIdAndUpdate(id, updates, { new: true, runValidators: true }).select(SIN_PASSWORD);
+  },
+
    // guardo muchos usuarios de una sola vez
   insertMany: async (users) => {
     return UserModel.insertMany(users);

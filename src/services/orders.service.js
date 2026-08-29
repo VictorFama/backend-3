@@ -2,6 +2,7 @@ import { ordersRepository } from "../repositories/orders.repository.js";
 import { usersRepository } from "../repositories/users.repository.js";
 import { storesRepository } from "../repositories/stores.repository.js";
 import { ORDER_STATUS, ORDER_STATUS_VALUES } from "../constants/orderstatus.js";
+import { DOCUMENT_TYPES } from "../constants/documentTypes.js";
 
 import { createError } from "../utils/AppError.js";
 
@@ -104,6 +105,34 @@ export const ordersService = {
     const actualizado = await ordersRepository.updateStatus(id, status);
 
     logger.info(`Pedido ${id} paso de "${order.status}" a "${status}"`);
+
+    return actualizado;
+  },
+
+  // guarda los metadatos del comprobante dentro del pedido
+  addProof: async (id, file) => {
+    if (!file) {
+      throw createError("FILE_REQUIRED", "No llego ningun archivo en el campo proof");
+    }
+
+    const order = await ordersRepository.findById(id);
+    if (!order) {
+      throw createError("ORDER_NOT_FOUND", `No hay ningun pedido con id ${id}`);
+    }
+
+    const proof = {
+      originalName: file.originalname,
+      fileName: file.filename,
+      path: file.path,
+      mimeType: file.mimetype,
+      size: file.size,
+      type: DOCUMENT_TYPES.DELIVERY_PROOF,
+      uploadedAt: new Date()
+    };
+
+    const actualizado = await ordersRepository.update(id, { proof });
+
+    logger.info(`Comprobante "${proof.originalName}" asociado al pedido ${id}`);
 
     return actualizado;
   }

@@ -29,6 +29,66 @@ components:
           payload:
             type: object
             description: Es el contenido de la respuesta. La estructgura depende del endpoint.
+    Document:
+      type: object
+      description: Metadatos del archivo. El archivo vive en uploads/, no en la base.
+      properties:
+        originalName:
+          type: string
+          description: Como se llamaba el archivo en la maquina del cliente
+          example: dni.pdf
+        fileName:
+          type: string
+          description: El nombre unico que le puso el servidor
+          example: 1756431234567-482910375.pdf
+        path:
+          type: string
+          description: Donde quedo guardado dentro del servidor
+          example: uploads/documents/1756431234567-482910375.pdf
+        mimeType:
+          type: string
+          enum: [application/pdf, image/jpeg, image/png, image/webp]
+          example: application/pdf
+        size:
+          type: number
+          description: Tamano en bytes, el maximo son 5 MB
+          example: 24533
+        type:
+          type: string
+          enum: [user_document, driver_license, delivery_proof]
+          example: user_document
+        uploadedAt:
+          type: string
+          format: date-time
+          example: 2026-08-29T10:00:00.000Z
+    Proof:
+      type: object
+      description: Metadatos del comprobante de entrega de un pedido.
+      properties:
+        originalName:
+          type: string
+          example: comprobante.jpg
+        fileName:
+          type: string
+          example: 1756431234567-193847562.jpg
+        path:
+          type: string
+          example: uploads/proofs/1756431234567-193847562.jpg
+        mimeType:
+          type: string
+          enum: [application/pdf, image/jpeg, image/png, image/webp]
+          example: image/jpeg
+        size:
+          type: number
+          example: 88120
+        type:
+          type: string
+          description: Lo pone la API, siempre es delivery_proof
+          example: delivery_proof
+        uploadedAt:
+          type: string
+          format: date-time
+          example: 2026-08-29T10:00:00.000Z
     User:
       type: object
       properties:
@@ -50,10 +110,9 @@ components:
           example: customer
         documents:
           type: array
-          description: Se llena en el Modulo 7 con Multer
+          description: Metadatos de los archivos que subio el usuario
           items:
-            type: object
-          example: []
+            $ref: '#/components/schemas/Document'
     Store:
       type: object
       properties:
@@ -118,3 +177,7 @@ components:
           type: string
           enum: [low, normal, high]
           example: normal
+        proof:
+          description: Comprobante de entrega. Es null hasta que se sube.
+          allOf:
+            - $ref: '#/components/schemas/Proof'

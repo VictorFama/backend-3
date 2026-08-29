@@ -196,3 +196,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/{oid}/proof:
+    post:
+      summary: Sube el comprobante de entrega de un pedido
+      description: >-
+        Recibe el archivo en el campo proof. Guarda el archivo en uploads/proofs y deja
+        los metadatos dentro del pedido. Tipos aceptados: PDF, JPEG, PNG y WEBP.
+        Tamano maximo 5 MB. El tipo de documento lo pone la API: delivery_proof.
+      tags:
+        - Orders
+      parameters:
+        - name: oid
+          in: path
+          required: true
+          description: ID del pedido al que se le asocia el comprobante
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - proof
+              properties:
+                proof:
+                  type: string
+                  format: binary
+                  description: El comprobante. PDF, JPEG, PNG o WEBP, hasta 5 MB.
+      responses:
+        "200":
+          description: Comprobante cargado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/Order'
+        "400":
+          description: >-
+            Falta el archivo (FILE_REQUIRED), el tipo de archivo no esta permitido
+            (INVALID_FILE_TYPE), supera los 5 MB (FILE_TOO_LARGE) o el campo no es
+            proof (INVALID_FILE_FIELD)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: El pedido no existe (ORDER_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: No se pudo guardar el archivo (UPLOAD_ERROR)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

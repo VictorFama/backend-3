@@ -1,5 +1,44 @@
 import mongoose from "mongoose";
 import { USER_ROLES, USER_ROLE_VALUES } from "../constants/userroles.js";
+import { DOCUMENT_TYPE_VALUES } from "../constants/documentTypes.js";
+
+// metadatos del archivo
+const documentSchema = new mongoose.Schema(
+  {
+    originalName: {
+      type: String,
+      required: true
+    },
+    fileName: {
+      type: String,
+      required: true
+    },
+    path: {
+      type: String,
+      required: true
+    },
+    mimeType: {
+      type: String,
+      required: true
+    },
+    size: {
+      type: Number,
+      required: true
+    },
+    type: {
+      type: String,
+      enum: DOCUMENT_TYPE_VALUES,
+      required: true
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  {
+    _id: false
+  }
+);
 
 const userSchema = new mongoose.Schema(
   {
@@ -25,9 +64,8 @@ const userSchema = new mongoose.Schema(
       enum: USER_ROLE_VALUES,
       default: USER_ROLES.CUSTOMER
     },
-    // se llena en el modulo 7 con multer
     documents: {
-      type: Array,
+      type: [documentSchema],
       default: []
     }
   },

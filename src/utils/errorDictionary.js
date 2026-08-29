@@ -21,6 +21,14 @@ export const ERROR_DICTIONARY = Object.freeze({
   MOCK_DEPENDENCIES_MISSING: { statusCode: 409, message: "Faltan datos previos para generar los mocks" },
   MOCK_GENERATION_ERROR: { statusCode: 500, message: "No se pudieron generar los datos de prueba" },
 
+  // archivo
+  FILE_REQUIRED: { statusCode: 400, message: "Hay que adjuntar un archivo" },
+  INVALID_FILE_TYPE: { statusCode: 400, message: "El tipo de archivo no esta permitido" },
+  FILE_TOO_LARGE: { statusCode: 400, message: "El archivo supera el tamano maximo de 5 MB" },
+  INVALID_FILE_FIELD: { statusCode: 400, message: "El campo del archivo no es el esperado" },
+  INVALID_DOCUMENT_TYPE: { statusCode: 400, message: "El tipo de documento no es valido" },
+  UPLOAD_ERROR: { statusCode: 500, message: "No se pudo guardar el archivo" },
+
   // errore generales
   VALIDATION_ERROR: { statusCode: 400, message: "Datos invalidos o incompletos." },
   ROUTE_NOT_FOUND: { statusCode: 404, message: "La ruta solicitada no existe." },

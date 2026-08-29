@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { ORDER_STATUS, ORDER_STATUS_VALUES } from "../constants/orderstatus.js";
 import { ORDER_PRIORITY, ORDER_PRIORITY_VALUES } from "../constants/priority.js";
+import { DOCUMENT_TYPES } from "../constants/documentTypes.js";
 
 // el item guarda el nombre y el precio del momento de la compra
 const orderItemSchema = new mongoose.Schema(
@@ -16,6 +17,43 @@ const orderItemSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true
+    }
+  },
+  {
+    _id: false
+  }
+);
+
+// metadatos del comprobante de entrega
+const proofSchema = new mongoose.Schema(
+  {
+    originalName: {
+      type: String,
+      required: true
+    },
+    fileName: {
+      type: String,
+      required: true
+    },
+    path: {
+      type: String,
+      required: true
+    },
+    mimeType: {
+      type: String,
+      required: true
+    },
+    size: {
+      type: Number,
+      required: true
+    },
+    type: {
+      type: String,
+      default: DOCUMENT_TYPES.DELIVERY_PROOF
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
     }
   },
   {
@@ -57,9 +95,8 @@ const orderSchema = new mongoose.Schema(
       enum: ORDER_PRIORITY_VALUES,
       default: ORDER_PRIORITY.NORMAL
     },
-    // se llena en el modulo 7 con multer
     proof: {
-      type: Object,
+      type: proofSchema,
       default: null
     }
   },

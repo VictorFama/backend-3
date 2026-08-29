@@ -545,3 +545,45 @@ Un archivo `.env.test` en la raiz del proyecto, con las mismas tres variables qu
 
 Esta la plantilla en `.env.test.example` copiarla a `.env.test` y completar usuario y
 password. El `.env.test` no se sube al repo igual que el `.env`.
+
+
+## Entrega Módulo 7 — Carga de archivos, documentos y comprobantes con Multer
+
+La API recibe archivos por
+`multipart/form-data`, los guarda en carpetas del servidor y en MongoDB deja solo sus
+metadatos, asociados a la entidad correspondiente.
+
+Dos endpoints nuevos, los dos documentados en Swagger con el detalle de cada campo,
+cada tipo permitido y cada error posible:
+
+| Metodo | Ruta | Campo del archivo | Que hace |
+|---|---|---|---|
+| POST | `/api/users/:uid/documents` | `document` | Asocia un documento a un usuario |
+| POST | `/api/orders/:oid/proof` | `proof` | Asocia el comprobante de entrega a un pedido |
+
+### Donde se guardan los archivos
+
+    uploads/
+      documents/    los documentos de usuario
+      proofs/       los comprobantes de entrega
+
+La carpeta se elige por el nombre del campo del archivo. Se crean solas la primera vez
+que llega un archivo, asi que no hay que crearlas a mano despues de clonar el repo.
+
+`uploads/` esta en el `.gitignore` desde la primera entrega: **los archivos subidos no
+van al repositorio**. En la base se guardan solo los metadatos, nunca el archivo.
+
+El nombre lo pone la API, nunca se usa el original, para que dos archivos con el mismo
+nombre no se pisen:
+
+    <timestamp>-<numero al azar><extension>     ej: 1756431234567-482910375.pdf
+
+### Los tipos de documento
+
+Estan en `src/constants/documentTypes.js`: `user_document`, `driver_license` y
+`delivery_proof`. El endpoint de documentos exige uno de los tres en el campo `type`.
+El de comprobantes usa siempre `delivery_proof`, no hay que enviarlo.
+
+### Los tests
+
+`tests/uploads.test.js` agrega 4 tests, carga correcta, archivo faltante, tipo de documento invalido y entidad inexistente. El PDF que suben esta en `tests/archivos/document.pdf` va al repositorio sin el, los tests no corren.
