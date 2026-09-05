@@ -10,13 +10,17 @@ import logger from "../config/logger.js";
 
 const CAMPOS_OBLIGATORIOS = ["customer", "store", "deliveryAddress"];
 export const ordersService = {
-  // devuelve los pedidos, valida el estado si viene como filtro
-  getOrders: async ({ customer, store, status } = {}) => {
+  // devuelve los pedidos, valida el estado y la paginacion si vienen
+  getOrders: async ({ customer, store, status, page = 1, limit = 10 } = {}) => {
     if (status && !ORDER_STATUS_VALUES.includes(status)) {
-            throw createError("INVALID_ORDER_STATUS", `Llego "${status}". Validos: ${ORDER_STATUS_VALUES.join(", ")}`);
+      throw createError("INVALID_ORDER_STATUS", `Llego "${status}". Validos: ${ORDER_STATUS_VALUES.join(", ")}`);
     }
 
-    return ordersRepository.findAll({ customer, store, status });
+    if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1) {
+      throw createError("VALIDATION_ERROR", `page y limit tienen que ser enteros mayores a cero. Llegaron page=${page} y limit=${limit}`);
+    }
+
+    return ordersRepository.findAll({ customer, store, status, page, limit });
   },
 
   // devuelve un pedido o corta con ORDER_NOT_FOUND

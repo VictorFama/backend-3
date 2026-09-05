@@ -2,11 +2,16 @@
 import { usersService } from "../services/users.service.js";
 import fs from "fs";
 
-// GET /api/users - lista los usuarios, acepta ?role=
+// GET /api/users - lista los usuarios, acepta ?role= ?page= ?limit=
 export const getUsers = async (req, res, next) => {
   try {
-    const users = await usersService.getUsers({ role: req.query.role });
-    res.json({ status: "success", payload: users });
+    // si no vienen, la lista sale paginada de a 10 igual
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const users = await usersService.getUsers({ role: req.query.role, page, limit });
+
+    res.json({ status: "success", page, limit, payload: users });
   } catch (error) {
     // no armo la respuesta se la pasa al middleware
     next(error);

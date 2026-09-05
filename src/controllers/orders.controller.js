@@ -1,15 +1,22 @@
 import { ordersService } from "../services/orders.service.js";
 import fs from "fs";
 
-// GET /api/orders - lista los pedidos, acepta ?customer= ?store= ?status=
+// GET /api/orders - lista los pedidos, acepta ?customer= ?store= ?status= ?page= ?limit=
 export const getOrders = async (req, res, next) => {
   try {
+    // si no vienen, la lista sale paginada de a 10 igual
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
     const orders = await ordersService.getOrders({
       customer: req.query.customer,
       store: req.query.store,
-      status: req.query.status
+      status: req.query.status,
+      page,
+      limit
     });
-    res.json({ status: "success", payload: orders });
+
+    res.json({ status: "success", page, limit, payload: orders });
   } catch (error) {
     // no armo la respuesta se la pasa al middleware
     next(error);

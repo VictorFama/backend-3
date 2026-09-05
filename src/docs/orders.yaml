@@ -25,6 +25,22 @@ paths:
           schema:
             type: string
             enum: [created, assigned, picked_up, in_transit, delivered, cancelled]
+        - name: page
+          in: query
+          required: false
+          description: Numero de pagina, arranca en 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Cuantos registros devuelve por pagina.
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
       responses:
         "200":
           description: Lista de pedidos obtenida correctamente

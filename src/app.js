@@ -1,3 +1,6 @@
+//config
+import { envConfig } from "./config/env.js";
+
 import express from "express";
 import cors from "cors";
 
@@ -32,20 +35,29 @@ app.get("/", (req, res) => {
   });
 });
 
+// lo miran docker y los servicios de deploy para saber si la API esta activa
 app.get("/health", (req, res) => {
   res.json({
     status: "success",
-    message: "API funcionando"
+    message: "API funcionando",
+    environment: envConfig.nodeEnv,
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
   });
 });
 
 app.use("/api/users", usersRouter);
 app.use("/api/stores", storesRouter);
 app.use("/api/orders", ordersRouter);
-app.use("/api/mocks", mocksRouter);
 
-app.use(loggerRouter);
-app.use("/api", loggerRouter);
+
+// mocks y loggerTest son herramientas en produccion no se activan
+if (!envConfig.isProd) {
+  app.use("/api/mocks", mocksRouter);
+
+  app.use(loggerRouter);
+  app.use("/api", loggerRouter);
+}
 
 app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
 

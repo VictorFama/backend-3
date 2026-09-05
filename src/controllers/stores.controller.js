@@ -1,10 +1,15 @@
 import { storesService } from "../services/stores.service.js";
 
-// GET /api/stores - lista los locales activos
+// GET /api/stores - lista los locales activos, acepta ?page= ?limit=
 export const getStores = async (req, res, next) => {
   try {
-    const stores = await storesService.getStores();
-    res.json({ status: "success", payload: stores });
+    // si no vienen, la lista sale paginada de a 10 igual
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const stores = await storesService.getStores({ page, limit });
+
+    res.json({ status: "success", page, limit, payload: stores });
   } catch (error) {
     // no armo la respuesta se la pasa al middleware
     next(error);

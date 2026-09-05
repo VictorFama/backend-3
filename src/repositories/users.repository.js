@@ -6,11 +6,14 @@ const SIN_PASSWORD = "-password";
 
 export const usersRepository = {
   // trae los usuarios, se puede filtrar por rol
-  findAll: async ({ role } = {}) => {
+  findAll: async ({ role, page = 1, limit = 10 } = {}) => {
     const filtro = {};
     if (role) filtro.role = role;
 
-    return UserModel.find(filtro).select(SIN_PASSWORD);
+    // salteo los de las paginas anteriores y corto en limit
+    const skip = (page - 1) * limit;
+
+    return UserModel.find(filtro).select(SIN_PASSWORD).skip(skip).limit(limit);
   },
 
   // busca un usuario por id

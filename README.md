@@ -587,3 +587,174 @@ El de comprobantes usa siempre `delivery_proof`, no hay que enviarlo.
 ### Los tests
 
 `tests/uploads.test.js` agrega 4 tests, carga correcta, archivo faltante, tipo de documento invalido y entidad inexistente. El PDF que suben esta en `tests/archivos/document.pdf` va al repositorio sin el, los tests no corren.
+
+
+## Entrega Módulo 8 — Performance, escalabilidad y Docker
+
+Esta entrega prepara la API para un entorno más cercano a producción: los listados dejan de
+devolver la colección completa, el health check informa el estado real del proceso, las
+herramientas internas se apagan en producción y la API se puede levantar dentro de un
+contenedor Docker.
+
+### Qué cambió en performance
+
+| | Antes | Ahora |
+|---|---|---|
+| `GET /api/users` | devolvía todos los usuarios | paginado, 10 por página |
+| `GET /api/stores` | devolvía todos los locales activos | paginado, 10 por página |
+| `GET /api/orders` | devolvía todos los pedidos | paginado, 10 por página |
+
+Los tres aceptan `?page=` y `?limit=`, y se pueden combinar con los filtros que ya existían:
+
+```
+GET /api/users?role=store&page=2&limit=5
+GET /api/orders?status=delivered&limit=20
+```
+
+La respuesta informa en qué página estás:
+
+```json
+{ "status": "success", "page": 2, "limit": 5, "payload": [] }
+```
+
+Si `page` o `limit` no son enteros mayores a cero, la API responde 400 `VALIDATION_ERROR`.
+
+El resto de los puntos de performance ya estaban resueltos en entregas anteriores: la carga de
+archivos tiene tope de 5 MB y cuatro tipos permitidos (Módulo 7), las consultas piden solo los
+campos que muestran (`select("-password")` y los `populate` con proyección), y los logs de
+peticiones HTTP no se publican en producción porque el logger arranca en nivel `info`.
+
+### Variables de entorno
+
+Copiá `.env.example` a `.env` y completá los valores.
+
+| Variable | Obligatoria | Qué es |
+|---|---|---|
+| `PORT` | sí | puerto en el que escucha la API |
+| `MONGODB_URI` | sí | string de conexión de MongoDB Atlas |
+| `NODE_ENV` | sí | `development`, `production` o `test` |
+| `LOG_LEVEL` | no | nivel mínimo que publica el logger. Si se deja vacío: `info` en producción, `debug` en el resto |
+
+La app valida las tres obligatorias al arrancar y no levanta si falta alguna: corta con un
+mensaje que dice cuáles faltan. También valida que `NODE_ENV` sea uno de los tres valores
+permitidos y que `PORT` sea un entero positivo.
+
+No hay `JWT_SECRET` ni URLs de servicios externos porque el proyecto no tiene autenticación ni
+integraciones con servicios de terceros.
+
+Para los tests hay un archivo aparte, `.env.test`, con la base de testing (Módulo 6).
+
+### Cómo correr la API localmente
+
+```bash
+npm install
+npm run dev        # con nodemon, para desarrollar
+npm start          # sin nodemon, es el comando que usa el contenedor
+```
+
+La API queda en `http://localhost:8080` (o el puerto que tenga `PORT`).
+
+### Cómo correr los tests
+
+```bash
+npm test
+```
+
+Corre 34 tests con Mocha, Chai y Supertest contra la base de testing definida en `.env.test`.
+Los tests no se corren dentro del contenedor: `.env.test` no se copia a la imagen.
+
+### Cómo acceder a Swagger
+
+Con la API levantada: `http://localhost:8080/api/docs`
+
+Están documentados los cinco módulos (Users, Stores, Orders, Mocks y Logger), incluidos los
+parámetros de paginación.
+
+### Health check
+
+```
+GET /health
+```
+
+```json
+{
+  "status": "success",
+  "message": "API funcionando",
+  "environment": "production",
+  "uptime": 12.53,
+  "timestamp": "2026-09-04T12:35:16.580Z"
+}
+```
+
+Devuelve el estado, el entorno, hace cuántos segundos arrancó el proceso y la hora del servidor.
+No expone la URI de la base ni ninguna credencial.
+
+### Endpoints internos en producción
+
+Con `NODE_ENV=production` no se montan `/api/mocks/*` ni `/loggerTest`: responden 404
+`ROUTE_NOT_FOUND` como cualquier ruta inexistente.
+
+Swagger (`/api/docs`) queda disponible en producción: es la documentación de la API y no
+expone nada que la API no devuelva igual.
+
+### Docker
+
+Construir la imagen (desde la raíz del proyecto, donde está el `Dockerfile`):
+
+```bash
+docker build -t shipnow-api .
+```
+
+Ejecutar el contenedor pasándole las variables de entorno:
+
+```bash
+docker run -p 8080:8080 --env-file .env shipnow-api
+```
+
+La API queda en `http://localhost:8080`. Para probar que levantó:
+
+```
+GET  http://localhost:8080/health
+GET  http://localhost:8080/api/docs
+GET  http://localhost:8080/api/users
+```
+
+El `.env` no está dentro de la imagen (está en el `.dockerignore`), por eso las variables se
+pasan con `--env-file` al ejecutar. Si corrés el contenedor sin `--env-file`, la app corta al
+arrancar avisando qué variables faltan.
+
+Para pararlo:
+
+```bash
+docker ps
+docker stop <id>
+```
+
+Docker manda `SIGTERM` y la app cierra el servidor antes de terminar, sin cortar las peticiones
+en curso. Se ve en `docker logs <id>`.
+
+### Qué puerto usa la API
+
+`8080` por defecto, definido en `PORT` y declarado en el `Dockerfile` con `EXPOSE 8080`. El
+`-p 8080:8080` del `docker run` conecta el puerto de la máquina con el del contenedor: si
+cambiás `PORT`, cambiá los dos.
+
+### Qué no se sube al repositorio
+
+En `.gitignore`: `node_modules/`, `.env`, `.env.test`, `logs/`, `*.log`, `uploads/`, `coverage/`.
+
+En `.dockerignore` (lo que no entra a la imagen): `node_modules`, `.env`, `.env.test`, `.git`,
+`logs`, `uploads`, `coverage`, `npm-debug.log`.
+
+`.env` y `.env.test` tienen la contraseña de la base y nunca se comparten. Lo que sí se
+versiona es `.env.example`, con las claves vacías.
+
+### Logs y uploads dentro del contenedor
+
+Los dos se generan adentro del contenedor y se pierden cuando el contenedor se elimina:
+
+- los logs de error se escriben en `logs/errors-YYYY-MM-DD.log` (rotan cada 14 días);
+- los archivos que suben los usuarios van a `uploads/documents/` y `uploads/proofs/`.
+
+Para producción de verdad habría que usar volúmenes de Docker o un servicio externo de
+almacenamiento (S3, Cloudinary). En esta etapa el contenedor no es almacenamiento permanente.

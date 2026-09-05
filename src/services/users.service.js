@@ -10,12 +10,17 @@ import logger from "../config/logger.js";
 const CAMPOS_OBLIGATORIOS = ["firstName", "lastName", "email", "password"];
 
 export const usersService = {
-  // devuelve los usuarios, valida el rol antes de ir a la base
-  getUsers: async ({ role } = {}) => {
+  // devuelve los usuarios, valida el rol y la paginacion antes de ir a la base
+  getUsers: async ({ role, page = 1, limit = 10 } = {}) => {
     if (role && !USER_ROLE_VALUES.includes(role)) {
       throw createError("INVALID_USER_ROLE", `Llego "${role}". Validos: ${USER_ROLE_VALUES.join(", ")}`);
     }
-    return usersRepository.findAll({ role });
+
+    if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1) {
+      throw createError("VALIDATION_ERROR", `page y limit tienen que ser enteros mayores a cero. Llegaron page=${page} y limit=${limit}`);
+    }
+
+    return usersRepository.findAll({ role, page, limit });
   },
 
   // devuelve un usuario o corta con USER_NOT_FOUND

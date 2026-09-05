@@ -31,8 +31,8 @@ if (!Number.isInteger(port) || port <= 0) {
   throw new Error(`PORT tiene que ser un numero entero positivo, llego: "${process.env.PORT}".`);
 }
 
-// en produccion arranca en info en desarrollo desde el debug
-const logLevel = process.env.NODE_ENV === "production" ? "info" : "debug";
+// el nivel lo manda el entorno: si no viene, en produccion arranca en info y en desarrollo en debug
+const logLevel = process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug");
 
 
 // el resto del proyecto importa esto, nunca process.env

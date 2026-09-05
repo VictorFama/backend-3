@@ -7,9 +7,13 @@ import { createError } from "../utils/AppError.js";
 const CAMPOS_OBLIGATORIOS = ["name", "address", "owner"];
 
 export const storesService = {
-  // devuelve los locales activos
-  getStores: async () => {
-    return storesRepository.findAll();
+  // devuelve los locales activos, valida la paginacion antes de ir a la base
+  getStores: async ({ page = 1, limit = 10 } = {}) => {
+    if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1) {
+      throw createError("VALIDATION_ERROR", `page y limit tienen que ser enteros mayores a cero. Llegaron page=${page} y limit=${limit}`);
+    }
+
+    return storesRepository.findAll({ page, limit });
   },
 
   // devuelve un local o corta con STORE_NOT_FOUND
