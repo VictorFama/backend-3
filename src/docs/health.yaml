@@ -1,0 +1,34 @@
+paths:
+  /health:
+    get:
+      summary: Estado de la API
+      description: Lo consultan Docker y los servicios de deploy para saber si la API esta
+        viva. No toca la base de datos ni expone informacion sensible.
+      tags:
+        - Health
+      responses:
+        "200":
+          description: La API esta funcionando
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: API funcionando
+                  environment:
+                    type: string
+                    description: El NODE_ENV con el que arranco el proceso
+                    example: development
+                  uptime:
+                    type: number
+                    description: Segundos que lleva corriendo el proceso
+                    example: 128.42
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2026-09-21T13:04:11.918Z"

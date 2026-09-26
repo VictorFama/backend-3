@@ -91,4 +91,13 @@ describe("Testing users", () => {
     expect(response.body.error).to.equal("USER_NOT_FOUND");
   });
 
+  it("GET /api/users/:uid responde 400 si el id no es un ObjectId valido", async () => {
+    const response = await requester.get("/api/users/no-soy-un-id");
+
+    expect(response.status).to.equal(400);
+    expect(response.body.status).to.equal("error");
+    expect(response.body.error).to.equal("VALIDATION_ERROR");
+    expect(response.body).to.have.property("message");
+  });
+
 });

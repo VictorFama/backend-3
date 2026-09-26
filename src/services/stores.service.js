@@ -1,6 +1,7 @@
 import { storesRepository } from "../repositories/stores.repository.js";
 import { usersRepository } from "../repositories/users.repository.js";
 import { USER_ROLES } from "../constants/userroles.js";
+import { MAX_PAGE_LIMIT } from "../constants/pagination.js";
 
 import { createError } from "../utils/AppError.js";
 
@@ -11,6 +12,10 @@ export const storesService = {
   getStores: async ({ page = 1, limit = 10 } = {}) => {
     if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1) {
       throw createError("VALIDATION_ERROR", `page y limit tienen que ser enteros mayores a cero. Llegaron page=${page} y limit=${limit}`);
+    }
+
+    if (limit > MAX_PAGE_LIMIT) {
+      throw createError("VALIDATION_ERROR", `limit no puede superar ${MAX_PAGE_LIMIT} y llego ${limit}`);
     }
 
     return storesRepository.findAll({ page, limit });

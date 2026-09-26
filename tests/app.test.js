@@ -14,6 +14,16 @@ describe("Testing de los endpoints", () => {
     expect(response.body.message).to.equal("Logs generados correctamente");
   });
 
+  it("GET /health responde 200 con el estado de la API", async () => {
+    const response = await requester.get("/health");
+
+    expect(response.status).to.equal(200);
+    expect(response.body.status).to.equal("success");
+    expect(response.body).to.have.property("environment");
+    expect(response.body).to.have.property("uptime");
+    expect(response.body).to.have.property("timestamp");
+  });
+
   it("GET /api/docs/ para la documentacion de Swagger", async () => {
     const response = await requester.get("/api/docs/");
 

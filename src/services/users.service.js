@@ -2,6 +2,7 @@
 import { usersRepository } from "../repositories/users.repository.js";
 import { USER_ROLE_VALUES } from "../constants/userroles.js";
 import { DOCUMENT_TYPE_VALUES } from "../constants/documentTypes.js";
+import { MAX_PAGE_LIMIT } from "../constants/pagination.js";
 
 import { createError } from "../utils/AppError.js";
 
@@ -18,6 +19,10 @@ export const usersService = {
 
     if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1) {
       throw createError("VALIDATION_ERROR", `page y limit tienen que ser enteros mayores a cero. Llegaron page=${page} y limit=${limit}`);
+    }
+
+    if (limit > MAX_PAGE_LIMIT) {
+      throw createError("VALIDATION_ERROR", `limit no puede superar ${MAX_PAGE_LIMIT} y llego ${limit}`);
     }
 
     return usersRepository.findAll({ role, page, limit });

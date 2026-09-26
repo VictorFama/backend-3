@@ -22,7 +22,10 @@ const formatoBase = winston.format.combine(
   linea
 );
 
-const consola = new winston.transports.Console();
+// la consola es para mirar mientras desarrollo en prod no publica nada
+const consola = new winston.transports.Console({
+  silent: envConfig.isProd
+});
 
 
 const archivoDeErrores = new DailyRotateFile({
@@ -32,11 +35,18 @@ const archivoDeErrores = new DailyRotateFile({
   maxFiles: "14d"                       // dura 14 dias y se borra
 });
 
+// guarda toda la actividad no solo las fallas
+const archivoCombinado = new DailyRotateFile({
+  filename: "logs/combined-%DATE%.log",
+  datePattern: "YYYY-MM-DD",
+  maxFiles: "14d"
+});
+
 const logger = winston.createLogger({
   levels: NIVELES,
   level: envConfig.logLevel,
   format: formatoBase,
-  transports: [consola, archivoDeErrores]
+  transports: [consola, archivoDeErrores, archivoCombinado]
 });
 
 export default logger;

@@ -3,6 +3,7 @@ import { usersRepository } from "../repositories/users.repository.js";
 import { storesRepository } from "../repositories/stores.repository.js";
 import { ORDER_STATUS, ORDER_STATUS_VALUES } from "../constants/orderstatus.js";
 import { DOCUMENT_TYPES } from "../constants/documentTypes.js";
+import { MAX_PAGE_LIMIT } from "../constants/pagination.js";
 
 import { createError } from "../utils/AppError.js";
 
@@ -18,6 +19,10 @@ export const ordersService = {
 
     if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1) {
       throw createError("VALIDATION_ERROR", `page y limit tienen que ser enteros mayores a cero. Llegaron page=${page} y limit=${limit}`);
+    }
+
+    if (limit > MAX_PAGE_LIMIT) {
+      throw createError("VALIDATION_ERROR", `limit no puede superar ${MAX_PAGE_LIMIT} y llego ${limit}`);
     }
 
     return ordersRepository.findAll({ customer, store, status, page, limit });
