@@ -6,12 +6,19 @@ import UserModel from "../src/models/user.model.js";
 import { USER_ROLES } from "../src/constants/userroles.js";
 import { DOCUMENT_TYPES } from "../src/constants/documentTypes.js";
 
+import StoreModel from "../src/models/store.model.js";
+import OrderModel from "../src/models/order.model.js";
+
 const requester = supertest(app);
 
 // el archivo que se sube en los tests
 const ARCHIVO_DE_PRUEBA = "tests/archivos/document.pdf";
 
+const ARCHIVO_INVALIDO = "tests/archivos/invalido.txt";
+
 const ID_INEXISTENTE = "665f4d0a8f9a1b001234abcd";
+
+const NOMBRE_LOCAL = "Test Local Uploads";
 
 const usuarioDePrueba = () => ({
   firstName: "Test",
@@ -32,6 +39,8 @@ describe("Testing carga de archivos", () => {
   });
 
   afterEach(async () => {
+    await OrderModel.deleteMany({ deliveryAddress: "Calle Test 123" });
+    await StoreModel.deleteMany({ name: NOMBRE_LOCAL });
     await UserModel.deleteMany({ email: /^test-/ });
 
     while (subidos.length > 0) {
@@ -86,6 +95,56 @@ describe("Testing carga de archivos", () => {
     // el usuario no quedo con el documento pegado
     const enLaBase = await UserModel.findById(usuario._id);
     expect(enLaBase.documents).to.be.an("array").that.is.empty;
+  });
+
+  it("POST /api/users/:uid/documents responde 400 si el archivo no es de un tipo permitido", async () => {
+    const response = await requester
+      .post(`/api/users/${usuario._id}/documents`)
+      .field("type", DOCUMENT_TYPES.USER_DOCUMENT)
+      .attach("document", ARCHIVO_INVALIDO);
+
+    expect(response.status).to.equal(400);
+    expect(response.body.status).to.equal("error");
+    expect(response.body.error).to.equal("INVALID_FILE_TYPE");
+
+    const enLaBase = await UserModel.findById(usuario._id);
+    expect(enLaBase.documents).to.be.an("array").that.is.empty;
+  });
+
+  it("POST /api/orders/:oid/proof sube el comprobante y lo asocia al pedido", async () => {
+    const local = await StoreModel.create({
+      name: NOMBRE_LOCAL,
+      address: "Av. Siempre Viva 742",
+      owner: usuario._id
+    });
+
+    const pedido = await OrderModel.create({
+      customer: usuario._id,
+      store: local._id,
+      items: [{ name: "Empanadas", quantity: 6, price: 1500 }],
+      deliveryAddress: "Calle Test 123",
+      total: 9000
+    });
+
+    const response = await requester
+      .post(`/api/orders/${pedido._id}/proof`)
+      .attach("proof", ARCHIVO_DE_PRUEBA);
+
+    expect(response.status).to.equal(200);
+    expect(response.body.status).to.equal("success");
+
+    const proof = response.body.payload.proof;
+    subidos.push(proof.path);
+
+    expect(proof.originalName).to.equal("document.pdf");
+    expect(proof.mimeType).to.equal("application/pdf");
+    expect(proof.size).to.be.a("number").and.to.be.above(0);
+    expect(proof.type).to.equal(DOCUMENT_TYPES.DELIVERY_PROOF);
+
+    // los metadatos quedaron en la base y el archivo en el disco
+    const enLaBase = await OrderModel.findById(pedido._id);
+    expect(enLaBase.proof.fileName).to.equal(proof.fileName);
+    expect(fs.existsSync(proof.path)).to.equal(true);
   });
 
   it("POST /api/orders/:oid/proof responde 404 si el pedido no existe", async () => {

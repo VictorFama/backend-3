@@ -156,6 +156,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Cancelar un pedido
+      description: Baja logica. El pedido pasa a cancelled y queda en la base.
+      tags:
+        - Orders
+      parameters:
+        - name: oid
+          in: path
+          required: true
+          description: ID del pedido
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Pedido cancelado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/Order'
+        "404":
+          description: El pedido no existe (ORDER_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: El pedido ya estaba entregado o cancelado (ORDER_ALREADY_CLOSED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/orders/{oid}/status:
     put:
       summary: Cambiar el estado de un pedido

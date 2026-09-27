@@ -146,4 +146,35 @@ describe("Testing orders", () => {
     expect(response.body.error).to.equal("INVALID_ORDER_STATUS");
   });
 
+  it("DELETE /api/orders/:oid cancela el pedido sin borrarlo", async () => {
+    const creado = await requester.post("/api/orders").send(pedidoValido());
+    const oid = creado.body.payload._id;
+
+    const response = await requester.delete(`/api/orders/${oid}`);
+
+    expect(response.status).to.equal(200);
+    expect(response.body.payload.status).to.equal(ORDER_STATUS.CANCELLED);
+
+    const enLaBase = await OrderModel.findById(oid);
+    expect(enLaBase).to.not.equal(null);
+  });
+
+  it("DELETE /api/orders/:oid responde 409 si el pedido ya estaba cancelado", async () => {
+    const creado = await requester.post("/api/orders").send(pedidoValido());
+    const oid = creado.body.payload._id;
+
+    await requester.delete(`/api/orders/${oid}`);
+    const response = await requester.delete(`/api/orders/${oid}`);
+
+    expect(response.status).to.equal(409);
+    expect(response.body.error).to.equal("ORDER_ALREADY_CLOSED");
+  });
+
+  it("DELETE /api/orders/:oid responde 404 si el pedido no existe", async () => {
+    const response = await requester.delete(`/api/orders/${ID_INEXISTENTE}`);
+
+    expect(response.status).to.equal(404);
+    expect(response.body.error).to.equal("ORDER_NOT_FOUND");
+  });
+
 });

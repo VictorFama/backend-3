@@ -122,16 +122,16 @@ de la base a la que se conecto no contiene `test`.
 Para correrlos hay que crear `.env.test` a partir de `.env.test.example`, con `NODE_ENV=test`
 y un `MONGODB_URI` que apunte a una base terminada en `-test`.
 
-Son 36 tests repartidos asi:
+Son 41 tests repartidos asi:
 
 | Archivo | Tests | Que cubre |
 |---|---|---|
 | `app.test.js` | 4 | `/loggerTest`, `/health`, la ruta de Swagger y el 404 de una ruta inexistente |
 | `users.test.js` | 7 | listado, creacion, 400 por campos faltantes, 409 por email repetido, 404 y 400 por id invalido |
 | `stores.test.js` | 6 | listado, creacion, validaciones y 404 |
-| `orders.test.js` | 9 | listado, creacion, consulta por id, cambio de estado y sus errores |
+| `orders.test.js` | 12 | listado, creacion, consulta por id, cambio de estado, cancelacion y sus errores |
 | `mocks.test.js` | 6 | generacion de usuarios y pedidos, e inserción en la base |
-| `uploads.test.js` | 4 | carga de un documento, archivo faltante, tipo de documento invalido y entidad inexistente |
+| `uploads.test.js` | 6 | carga de un documento y de un comprobante, archivo faltante, tipo de archivo invalido, tipo de documento invalido y entidad inexistente |
 
 Cada grupo limpia lo que crea. No dependen del orden de ejecucion ni de datos cargados a mano.
 
@@ -238,7 +238,7 @@ Tres transportes:
 | Transporte | Que guarda |
 |---|---|
 | Consola | todo, **solo fuera de produccion**. Con `NODE_ENV=production` no publica una sola linea |
-| `logs/errors-%DATE%.log` | unicamente `error` y `fatal` |
+| `logs/error-%DATE%.log` | unicamente `error` y `fatal` |
 | `logs/combined-%DATE%.log` | toda la actividad, incluidas las peticiones HTTP |
 
 Son el `error.log` y el `combined.log` que pide la consigna, con la rotacion diaria que pide
@@ -307,6 +307,7 @@ La referencia completa, con parametros, bodies y respuestas, esta en Swagger
 | GET | `/api/orders/:oid` | un pedido |
 | POST | `/api/orders` | crea un pedido |
 | PUT | `/api/orders/:oid/status` | cambia el estado de un pedido |
+| DELETE | `/api/orders/:oid` | cancela el pedido (baja logica, no lo borra) |
 | POST | `/api/orders/:oid/proof` | sube el comprobante de entrega |
 | GET | `/api/docs` | documentacion Swagger |
 
@@ -712,10 +713,13 @@ Y en el archivo de Logs se registran los error y fatal.
 
 En la carpeta `logs/`, un archivo por dia:
 
-    logs/errors-2026-08-27.log
-    logs/errors-2026-08-28.log
+    logs/error-2026-08-26.log
+    logs/error-2026-08-27.log
+    logs/combined-2026-08-26.log
+    logs/combined-2026-08-27.log
 
-- Se guardan los niveles `error` y `fatal`. Los `info`, `warning`, `http` y `debug` se ven en consola pero no quedan en disco.
+- `error-*.log` guarda solo los niveles `error` y `fatal`.
+- `combined-*.log` guarda toda la actividad, incluidas las peticiones HTTP.
 - Quedan por 14 dias y los mas viejos se borran solos, para que la carpeta no crezca.
 
 #### Que se ignora en Git
@@ -1082,7 +1086,7 @@ versiona es `.env.example`, con las claves vacías.
 
 Los dos se generan adentro del contenedor y se pierden cuando el contenedor se elimina:
 
-- los logs de error se escriben en `logs/errors-YYYY-MM-DD.log` (rotan cada 14 días);
+- los logs se escriben en `logs/error-YYYY-MM-DD.log` y `logs/combined-YYYY-MM-DD.log` (se guardan 14 días);
 - los archivos que suben los usuarios van a `uploads/documents/` y `uploads/proofs/`.
 
 Para producción de verdad habría que usar volúmenes de Docker o un servicio externo de

@@ -65,3 +65,13 @@ export const uploadOrderProof = async (req, res, next) => {
     next(error);
   }
 };
+
+// DELETE /api/orders/:oid - cancelar el pedido no lo borra de la base
+export const cancelOrder = async (req, res, next) => {
+  try {
+    const order = await ordersService.cancelOrder(req.params.oid);
+    res.json({ status: "success", payload: order });
+  } catch (error) {
+    next(error);
+  }
+};

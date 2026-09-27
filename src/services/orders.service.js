@@ -117,7 +117,12 @@ export const ordersService = {
 
     return actualizado;
   },
-
+  
+  // baja logica: el pedido no se borra se cancela
+  cancelOrder: async (id) => {
+    return ordersService.updateOrderStatus(id, ORDER_STATUS.CANCELLED);
+  }, 
+  
   // guarda los metadatos del comprobante dentro del pedido
   addProof: async (id, file) => {
     if (!file) {

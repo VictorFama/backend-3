@@ -30,7 +30,7 @@ const consola = new winston.transports.Console({
 
 const archivoDeErrores = new DailyRotateFile({
   level: "error",                       // guardo fatal y error
-  filename: "logs/errors-%DATE%.log",
+  filename: "logs/error-%DATE%.log",
   datePattern: "YYYY-MM-DD",
   maxFiles: "14d"                       // dura 14 dias y se borra
 });
